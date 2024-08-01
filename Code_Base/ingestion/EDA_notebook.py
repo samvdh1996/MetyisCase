@@ -10,7 +10,7 @@ input_path = "file:/Workspace/Users/samvanderheijden01@gmail.com/MetyisCase/Sale
 # COMMAND ----------
 
 #ingest data and create timestamp column
-df = spark.read.csv(input_path, header=True, inferSchema=True).withColumn("Order Date", fn.to_timestamp(col("Order Date"), "MM/dd/yy HH:mm"))
+df = spark.read.csv(input_path, header=True, inferSchema=True)
 
 # COMMAND ----------
 
@@ -47,8 +47,9 @@ display(product_counts)
 from pyspark.sql.functions import month, year
 
 # Count the number of rows per month
-monthly_counts = df.groupBy(year("Order Date"), month("Order Date").alias("month")).count().orderBy("month")
+monthly_counts = df.withColumn("Order Date", fn.to_timestamp(col("Order Date"), "MM/dd/yy HH:mm")) \
+                    .groupBy(year("Order Date"), month("Order Date").alias("month")).count().orderBy("month")
 
 display(monthly_counts)
 
-#Altough there is still data skew the combination of year and month columns should be a good partitioning column. Users of the table will probably want to query by month or year often which should lead to improved query performance by using this partition strategy
+#Altough there is still data skew the combination of year and month columns should be a good partitioning column. Users of the table will probably want to query by month or year often which should lead to improved query performance by using this partition strategy and reduced IO when ingestion data
